@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dosage Calculator</title>
-
 <style>
 body{
     font-family:Segoe UI,Arial,sans-serif;
@@ -23,13 +22,11 @@ body{
 h2{
     color:#d71920;
 }
-
 label{
     display:block;
     margin-top:15px;
     font-weight:bold;
 }
-
 input,select{
     width:100%;
     padding:10px;
@@ -38,54 +35,45 @@ input,select{
     border:1px solid #ccc;
     box-sizing:border-box;
 }
-
+input[readonly]{
+    background:#f0f0f0;
+    color:#555;
+}
 .row{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
 }
-
 .result{
     margin-top:25px;
     background:#fff5f5;
     padding:15px;
     border-radius:10px;
 }
-
 #dosage{
     color:#d71920;
     font-size:32px;
     font-weight:bold;
 }
-
 #formula{
     margin-top:15px;
     color:#555;
     font-size:14px;
 }
 </style>
-
 </head>
-
 <body>
-
 <div class="card">
-
 <h2>Actual Dosage Calculator</h2>
-
 <label>Chemical</label>
 <select id="chemical"></select>
-
 <label>Density</label>
-<input id="density" readonly>
-
+<input id="density" type="number" step="0.01" readonly>
 <div class="row">
-
 <div>
 <label>Water Flow</label>
 <input id="flow" type="number">
 </div>
-
 <div>
 <label>Unit</label>
 <select id="flowUnit">
@@ -93,16 +81,12 @@ input,select{
 <option value="L/min">L/min</option>
 </select>
 </div>
-
 </div>
-
 <div class="row">
-
 <div>
 <label>Feed Rate</label>
 <input id="feed" type="number">
 </div>
-
 <div>
 <label>Unit</label>
 <select id="feedUnit">
@@ -110,23 +94,15 @@ input,select{
 <option value="mL/min">mL/min</option>
 </select>
 </div>
-
 </div>
-
 <div class="result">
-
 <h3>Dosage</h3>
-
 <div id="dosage">-</div>
-
 <div id="formula"></div>
-
 </div>
-
 </div>
-
 <script>
-
+const CUSTOM_KEY = "__custom__";
 const chemicals = {
   "Gengard GN8020": 1.17,
   "Gengard GN7300": 1.58,
@@ -142,7 +118,6 @@ const chemicals = {
   "Hypersperse MDC704I": 1.14,
   "KLARAID IC1172": 1.34
 };
-
 const chemSelect = document.getElementById("chemical");
 const densityBox = document.getElementById("density");
 
@@ -152,9 +127,21 @@ Object.keys(chemicals).forEach(name=>{
     op.text=name;
     chemSelect.appendChild(op);
 });
+// Add custom option at the end
+let customOp=document.createElement("option");
+customOp.value=CUSTOM_KEY;
+customOp.text="Custom (ใส่ค่าเอง)";
+chemSelect.appendChild(customOp);
 
 chemSelect.addEventListener("change",()=>{
-    densityBox.value=chemicals[chemSelect.value];
+    if(chemSelect.value===CUSTOM_KEY){
+        densityBox.readOnly=false;
+        densityBox.value="";
+        densityBox.focus();
+    }else{
+        densityBox.readOnly=true;
+        densityBox.value=chemicals[chemSelect.value];
+    }
     calculate();
 });
 
@@ -163,38 +150,28 @@ document.querySelectorAll("input,select").forEach(el=>{
 });
 
 function calculate(){
-
     let density=parseFloat(densityBox.value);
     let flow=parseFloat(document.getElementById("flow").value);
     let feed=parseFloat(document.getElementById("feed").value);
-
-    if(isNaN(flow)||isNaN(feed)){
+    if(isNaN(flow)||isNaN(feed)||isNaN(density)){
         document.getElementById("dosage").innerHTML="-";
         document.getElementById("formula").innerHTML="";
         return;
     }
-
     // Flow
     let flowUnit=document.getElementById("flowUnit").value;
-
     if(flowUnit=="L/min")
         flow=flow*60;
-
     if(flowUnit=="m3/h")
         flow=flow*1000;
-
     // Feed
     let feedUnit=document.getElementById("feedUnit").value;
-
     if(feedUnit=="mL/min")
         feed=feed/1000*60;
-
     // ppm
     let ppm=(feed*density*1000000)/flow;
-
     document.getElementById("dosage").innerHTML=
         ppm.toFixed(2)+" ppm";
-
     document.getElementById("formula").innerHTML=`
     <b>Calculation</b><br><br>
     Dosage =
@@ -206,12 +183,8 @@ function calculate(){
     = <b>${ppm.toFixed(2)} ppm</b>
     `;
 }
-
 chemSelect.selectedIndex=0;
 densityBox.value=chemicals[chemSelect.value];
-
-
 </script>
-
 </body>
 </html>
