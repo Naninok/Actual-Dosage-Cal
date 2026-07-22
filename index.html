@@ -95,6 +95,8 @@ input[readonly]{
 </select>
 </div>
 </div>
+<label>% Dilution (ความเข้มข้นของสารที่ป้อนจริง, ถ้าไม่กรอก = 100%)</label>
+<input id="dilution" type="number" step="0.1" placeholder="100">
 <div class="result">
 <h3>Dosage</h3>
 <div id="dosage">-</div>
@@ -153,7 +155,9 @@ function calculate(){
     let density=parseFloat(densityBox.value);
     let flow=parseFloat(document.getElementById("flow").value);
     let feed=parseFloat(document.getElementById("feed").value);
-    if(isNaN(flow)||isNaN(feed)||isNaN(density)){
+    let dilutionInput=document.getElementById("dilution").value;
+    let dilution=dilutionInput===""?100:parseFloat(dilutionInput);
+    if(isNaN(flow)||isNaN(feed)||isNaN(density)||isNaN(dilution)||dilution<=0){
         document.getElementById("dosage").innerHTML="-";
         document.getElementById("formula").innerHTML="";
         return;
@@ -168,16 +172,18 @@ function calculate(){
     let feedUnit=document.getElementById("feedUnit").value;
     if(feedUnit=="mL/min")
         feed=feed/1000*60;
+    // Effective feed rate of pure chemical after % dilution
+    let effectiveFeed=feed*(dilution/100);
     // ppm
-    let ppm=(feed*density*1000000)/flow;
+    let ppm=(effectiveFeed*density*1000000)/flow;
     document.getElementById("dosage").innerHTML=
         ppm.toFixed(2)+" ppm";
     document.getElementById("formula").innerHTML=`
     <b>Calculation</b><br><br>
     Dosage =
-    (Feed Rate × Density × 1,000,000) ÷ Water Flow
+    (Feed Rate × %Dilution ÷ 100 × Density × 1,000,000) ÷ Water Flow
     <br><br>
-    = (${feed.toFixed(3)} × ${density} × 1,000,000)
+    = (${feed.toFixed(3)} × ${dilution}% × ${density} × 1,000,000)
       ÷ ${flow.toFixed(1)}
     <br><br>
     = <b>${ppm.toFixed(2)} ppm</b>
